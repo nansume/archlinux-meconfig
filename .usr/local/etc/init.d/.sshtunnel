@@ -1,0 +1,42 @@
+#!/bin/sh
+
+RUN="ssh"
+XUSER="<user1>"
+AUTH_USER="<user2>"
+XHOME="/home/${XUSER}"
+LOGFILE="/var/log/${0##*[/-]}.log"
+DOMAINNAME="$(domain-name)"
+SSH_PORT="<port>"
+PASS="/path/to/dir/${AUTH_USER}@<myhostname>"
+
+case $(ext-ip) in
+  "<my-ipaddr1>")
+    DOMAINNAME="<my-domain1>"
+  ;;
+  "<my-ipaddr2>")
+    DOMAINNAME="<my-domain2>"
+  ;;
+esac
+
+case ${@} in
+  'start'|'restart')
+    pgrep -ox ${RUN} >/dev/null && exit 1
+
+    >> "${LOGFILE}"
+    chown ${XUSER}:${XUSER} "${LOGFILE}"
+
+    printf 873 > "/proc/sys/net/ipv4/ip_unprivileged_port_start"
+    USER=${XUSER} \
+    HOME=${XHOME} \
+    DROPBEAR_PASSWORD=$(cat ${PASS}) \
+    setuidgid ${XUSER} ${RUN} \
+      -i ${XHOME}/.ssh/id_dropbear_tunnel \
+      -L 127.0.0.1:873:127.0.0.1:873 \
+      -L 127.0.0.1:3128:127.0.0.1:3128 \
+      -f -N -p ${SSH_PORT} \
+      ${AUTH_USER}@${DOMAINNAME} >> ${LOGFILE} 2>&1
+    sleep 1
+    printf 1024 > "/proc/sys/net/ipv4/ip_unprivileged_port_start"
+  ;;
+esac
+printf "\e[1;32m +\e[0;36m ${RUN}\e[m: \e[0;31m${1}\e[m... \e[0;33mok\e[m\n"

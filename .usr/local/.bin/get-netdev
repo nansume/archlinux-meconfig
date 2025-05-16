@@ -1,0 +1,14 @@
+#!/bin/sh
+# Copyright (C) 2023 Artjom Slepnjov, Shellgen
+# License GPLv3: GNU GPL version 3 only
+# http://www.gnu.org/licenses/gpl-3.0.html
+
+
+IFS="$(printf '\n\t')"; IFS=${IFS%?}
+
+for NETDEV in $(route -n -A "inet") ''; do
+  case ${NETDEV} in
+    '0.0.0.0 '*) break;;
+  esac
+done
+test -n "${NETDEV}" && printf '%s\n' "${NETDEV##* }"

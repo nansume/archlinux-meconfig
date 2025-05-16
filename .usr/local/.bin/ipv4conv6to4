@@ -1,0 +1,30 @@
+#!/bin/sh
+# Copyright (C) 2022-2024 Artjom Slepnjov, Shellgen
+# License GPLv3: GNU GPL version 3 only
+# http://www.gnu.org/licenses/gpl-3.0.html
+# Usage: ipv4conv6to4 {my-ipv4-addr}
+# Date: 2024-01-03 10:00 UTC - last change
+
+# $1=IP4EXT $2=end-addr6-generic
+set ${1:?required - public ipv4 address... empty}
+
+####### check to validate an ipv4 address ###########################################################
+test -z "${1#${1%%[^0-9.]*}}" &&                # uses for ipv4 addr [0-9.]* - otherwise not valid  #
+test -z "${1#${1%%.0[0-9]*}}" &&                # 123.023.023.023 - not valid (023)                 #
+test -z "${1#${1%%[2-9][6-9][0-9]*}}" &&        # fix: %%[12] --> %%[2-9] , required remove it.     #
+test -z "${1#${1%%[2-9][5-9][6-9]*}}" &&        # fix: %%[12] --> %%[2-9]                           #
+test -z "${1#${1%%[03-9][0-9][0-9]*}}" &&       # less than or equivalent <= 255                    #
+test -z "${1#${1%%[0-9][0-9][0-9][0-9]*}}" &&   # 1234.1234.1234.1234 - not valid                   #
+test -z "${1%%[1-9]*.*[0-9].[0-9]*.*[0-9]}" &&  #                                                   #
+test -z "${1%%*[0-9].[0-9]*.*[0-9].[0-9]*}" &&  # [1-9]*[0-9].[0-9]*[0-9].[0-9]*[0-9].[0-9]*[0-9]   #
+### is a valid ipv4 address: 123.123.123.123    #                                                   #
+#####################################################################################################
+
+for X in $(cat /dev/urandom | tr -dc '0-9a-f' | fold -w 4 | head -n 5); do
+  set ${1} "${2:+${2}:}${X}"
+done
+
+IFS='.'
+test -n "${2}" && printf "2002:%02x%02x:%02x%02x:${2}\n" ${1} ||
+
+{ printf %s\\n "no valid address... failed" >&2; ! true;}

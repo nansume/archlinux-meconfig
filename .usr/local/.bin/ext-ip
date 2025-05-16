@@ -1,0 +1,26 @@
+#!/bin/sh
+# $1=user $2=config-file $3=myip-list $4=run-command $5=counter+cycle+max $6=counter $7=extip
+# Usage: EXTIP=$(ext-ip)
+# Date: 2023-12-24 10:00 UTC - last change
+
+set -- 'clearnet' '/etc/def/myip' '/etc/lst.d/myip.lst'
+
+test -s "${2:?required filename}" || {
+  set -- ${@} "$(type get-ip)"
+  set -- ${1} ${2} ${3} ${4##* } '10' '0'
+
+  until test -n "${EXTIP}"; do
+    test "0${6}" -gt "${5}" && break
+    EXTIP=$(su -l ${1} -s ${4:?required run command} "${3}")
+    set -- ${1} ${2} ${3} ${4} ${5} $(expr "0${6}" + 1)
+  done
+
+  mkdir -pm '0755' ${2%/*}
+  EXTIP=${EXTIP##*[![:digit:].]}
+  EXTIP=${EXTIP%%[![:digit:].]*}
+
+  printf ${EXTIP:?required ip address [extip]} > ${2}
+}
+
+IFS= read -r EXTIP < ${2}
+printf %s\\n "${EXTIP:?required ip address}"

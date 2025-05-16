@@ -1,0 +1,18 @@
+#!/bin/sh
+
+RUN="inetd"
+PIDFILE="/run/${RUN}.pid"
+
+case ${1} in
+  'stop'|'restart')
+    killall ${RUN} >/dev/null 2>&1 ||:
+    test -s "${PIDFILE}" && rm -- "${PIDFILE}"
+  ;;
+esac &&
+case ${1} in
+  'start'|'restart')
+    pgrep -ox ${RUN} >/dev/null && exit 1
+    ${RUN} -q '128' -R '60' /etc/${RUN}.conf
+  ;;
+esac &&
+printf "\e[1;32m +\e[0;36m ${RUN}\e[m: \e[0;31m${1}\e[m... \e[0;33mok\e[m\n"

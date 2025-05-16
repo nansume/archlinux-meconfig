@@ -1,0 +1,35 @@
+=================================================================================
+$ - user
+% - root
+---------------------------------------------------------------------------------
+editor: nano, vi (vim), dte, adie
+=================================================================================
+perm default:
+---------------------------------------------------------------------------------
+ % chown root:root <myconf>.conf
+ % chmod 644 <myconf>.conf
+=================================================================================
+=                                     Install                                   =
+=================================================================================
+ % pacman -S busybox stunnel
+ % mv inetd.conf inetd.conf~  # save to the old config
+ % cp inetd.conf /etc/
+ % mkdir /etc/stunnel/
+ % cp secrets.key stunnel-proxyclient.conf /etc/stunnel/
+ % cp rootCA-cert.pem /etc/ssl/
+ % chmod 400 /etc/stunnel/client-secrets.key
+ % chown nobody:nobody /etc/stunnel/client-secrets.key
+# required: addr the proxy-server
+ % nano /etc/stunnel/stunnel-proxyclient.conf
+ -------------------------
+ connect = <ipaddr>:<port>
+ -------------------------
+# replace to own the pass
+ % nano /etc/stunnel/secrets.key
+ -------------------------------
+ client1:<passkey>
+ -------------------------------
+=================================================================================
+ % systemctl enable inetd
+ % systemctl start inetd
+=================================================================================

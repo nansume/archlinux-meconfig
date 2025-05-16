@@ -1,0 +1,40 @@
+#!/bin/sh
+# Copyright (C) 2020-2024 Artjom Slepnjov, Shellgen
+# License GPLv3: GNU GPL version 3 only
+# http://www.gnu.org/licenses/gpl-3.0.html
+# Date: 2024-03-18 22:00 UTC - last change
+set -euf
+
+# $1=newline $2=file $3=newline+counts+max $4=mapfile $5=random $6=num+counts $7=print+string
+# randstr-lst /etc/lst.d/web_useragent.lst
+set -- "$(printf '\n\t')" ${1:?required: randstr-lst </etc/lst.d/web_useragent.lst>}  #$(wc -l < ${1})
+set -- "${1%?}" "${2}" '0'
+
+while IFS= read -r X; do
+  X=${X%%#*}
+  test -n "${X}" &&
+  set -- "${1}" ${2} $(expr "0${3}" + '1') "${4:+${4}${1}}${X}"
+done < ${2}
+
+set -- "${1}" ${2} ${3} "${4}" '3' '0'
+
+until test -n "${NUMRAND-}"; do
+  test "0${6}" -gt "${5}" && exit
+  NUMRAND=$(ulimit -St '0'; tr -dc 0-9 < /dev/urandom | fold -w ${#3} | head -n 1)
+  set -- "${1}" ${2} ${3} "${4}" ${5} $(expr "0${6}" + '1')
+done
+
+# expr ${RANDOM} % 80
+set -- "${1}" ${2} ${3} "${4}" $(expr "0${NUMRAND}" % ${3}) '0'
+
+
+IFS=${1}
+for X in ${4}; do
+  #X=${X%%#*} && test -n ${X} && set -- ${1} ${2} ${X} &&
+  set -- "${1}" ${2} ${3} "${4}" ${5} $(expr "0${6}" + '1')
+  test "${6}" -eq "${5}" || continue
+  set -- "${1}" ${2} ${3} "${4}" ${5} ${6} "${X}"
+  break
+done
+
+test -n "${7-}" && printf '%s\n' "${7}"

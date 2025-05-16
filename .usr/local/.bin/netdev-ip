@@ -1,0 +1,19 @@
+#!/bin/sh
+# Date: 2024-01-17 15:00 UTC - last change
+
+IFS="$(printf '\n\t')"; IFS=${NL%?}
+
+test -n "${1}" || set -- $(get-netdev)
+
+for IP in $(ifconfig -a "${1:-eth0}") ''; do
+  case ${IP} in
+    *' addr:'*)
+      IP=${IP#*addr: }  # match: inet6 addr: <ipv6addr>
+      IP=${IP#*addr:}   # match: inet addr:<ipv4addr>
+      IP=${IP%%/[0-9]*} # surely for ipv6 ?
+      break
+    ;;
+  esac
+done
+
+test -n "${IP}" && printf %s\\n "${IP%% *}"
